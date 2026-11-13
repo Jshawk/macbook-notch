@@ -1,0 +1,35 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: macOS build and unit tests
+    runs-on: macos-26
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Build and run unit tests
+        run: >-
+          xcodebuild
+          -project MacBookNotch.xcodeproj
+          -scheme MacBookNotch
+          -derivedDataPath build/DerivedData
+          -destination 'platform=macOS,arch=arm64'
+          CODE_SIGN_IDENTITY=-
+          test -only-testing:MacBookNotchTests
